@@ -6,3 +6,4 @@ venv/
 .DS_Store
 # Ignore raw bulky 500MB+ zip if downloaded locally
 data/*.zip
+

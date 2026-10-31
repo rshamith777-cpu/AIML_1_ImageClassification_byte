@@ -27,3 +27,4 @@ data/
     └── dogs/
 ```
 For fast local experimentation, this repository also includes a lightweight CPU-optimized spatial feature pipeline with 10 verified test samples under `outputs/sample_inferences/`.
+
