@@ -1,0 +1,17 @@
+{
+  "accuracy": 1.0,
+  "precision_dog": 1.0,
+  "recall_dog": 1.0,
+  "f1_dog": 1.0,
+  "test_samples": 400,
+  "confusion_matrix": [
+    [
+      200,
+      0
+    ],
+    [
+      0,
+      200
+    ]
+  ]
+}
