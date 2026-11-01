@@ -78,3 +78,4 @@ if chosen_sample != "Select a sample..." and model_ready:
         pred_label = "DOG 🐕" if p_dog >= 0.50 else "CAT 🐈"
         conf = p_dog if "DOG" in pred_label else p_cat
         st.markdown(f"**Predicted Class:** `{pred_label}` (Confidence: {conf*100:.2f}%)")
+

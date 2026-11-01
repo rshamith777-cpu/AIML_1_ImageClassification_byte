@@ -11,6 +11,7 @@
   <a href="https://keras.io/"><img src="https://img.shields.io/badge/Architecture-MobileNetV2-D00000?style=for-the-badge&logo=keras&logoColor=white" alt="MobileNetV2" /></a>
   <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/FastAPI-0.100%2B-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" /></a>
   <img src="https://img.shields.io/badge/Test_Accuracy-96.09%25-C8FF32?style=for-the-badge&labelColor=141610" alt="Accuracy 96.09%" />
+  <a href="https://app.netlify.com/start/deploy?repository=https://github.com/rshamith777-cpu/AIML_1_ImageClassification_byte"><img src="https://www.netlify.com/img/deploy/button.svg" alt="Deploy to Netlify" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-gray?style=for-the-badge" alt="License" /></a>
 </p>
 
@@ -44,6 +45,19 @@ The repository features **SIGHTLINE**, an editorial computer-vision laboratory i
 - **Dual Probability Distribution:** Real-time visual meters comparing $P(\text{Dog})$ vs $P(\text{Cat})$ with calibrated percentage confidence and raw linear logit telemetry.
 - **10-Photo Held-Out Benchmark Gallery:** Pre-loaded with the 10 real test photos from the held-out partition (`cat_01`–`cat_05`, `dog_01`–`dog_05`). Clicking any photo triggers instant classification and shows ground-truth reconciliation.
 - **Subtle Lab Margin Stickers:** Styled die-cut pet laboratory badges (Canine Radar 01, Feline Verified Stamp, 99.05% Recall Dog Bone, Fishbone Treat) floating in the outer margins without ever obstructing the main cards.
+
+### 🌐 Hosted Live on Netlify
+
+This repository is pre-configured with `netlify.toml` for zero-configuration continuous deployment:
+
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/rshamith777-cpu/AIML_1_ImageClassification_byte)
+
+#### 30-Second Netlify Deployment:
+1. Log in to **[app.netlify.com](https://app.netlify.com)** using your GitHub account.
+2. Click **Add new site** &rarr; **Import an existing project**.
+3. Select **GitHub** and pick `rshamith777-cpu/AIML_1_ImageClassification_byte`.
+4. Leave build settings as auto-detected by `netlify.toml` (`publish = "."`).
+5. Click **Deploy AIML_1_ImageClassification_byte** &rarr; site goes live instantly with an SSL `.netlify.app` domain!
 
 ---
 
