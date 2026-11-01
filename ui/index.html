@@ -1,0 +1,1843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SIGHTLINE // Pet Vision Laboratory</title>
+  <meta name="description" content="Editorial Deep Transfer Learning Computer Vision Interface for MobileNetV2 Cats vs Dogs Classification." />
+  
+  <!-- Typography: Space Grotesk & IBM Plex Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ==========================================================================
+       DESIGN TOKENS & ROOT VARIABLES
+       ========================================================================== */
+    :root {
+      --bg-canvas: #141610;
+      --bg-surface: #1B1E16;
+      --bg-surface-elevated: #22261C;
+      --bg-surface-subtle: #181B12;
+      
+      --border-subtle: rgba(242, 240, 231, 0.08);
+      --border-medium: rgba(242, 240, 231, 0.16);
+      --border-focus: #C8FF32;
+      
+      --text-primary: #F2F0E7;
+      --text-secondary: #A3A899;
+      --text-muted: #6B7062;
+      
+      --accent-lime: #C8FF32;
+      --accent-lime-dim: rgba(200, 255, 50, 0.12);
+      --accent-lime-border: rgba(200, 255, 50, 0.35);
+      
+      --status-cat: #78B7FF;
+      --status-dog: #C8FF32;
+      --status-error: #FF6654;
+      --status-warn: #EBB338;
+      
+      --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      
+      --transition-fast: 150ms cubic-bezier(0.16, 1, 0.3, 1);
+      --transition-smooth: 250ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Reset & Base Setup */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-canvas);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Subtle background grid texture */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(rgba(242, 240, 231, 0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(242, 240, 231, 0.015) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 24px 24px 64px 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ==========================================================================
+       MASTHEAD / HEADER
+       ========================================================================== */
+    .masthead {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-medium);
+      margin-bottom: 28px;
+    }
+
+    .masthead-brand {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .brand-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent-lime);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-eyebrow::before {
+      content: "";
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: var(--accent-lime);
+      border-radius: 50%;
+    }
+
+    .brand-title {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+    }
+
+    .brand-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+    }
+
+    .masthead-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .meta-chip {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 6px 12px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .meta-chip strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .status-pill {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-medium);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-primary);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      transition: background var(--transition-fast);
+    }
+
+    .status-dot.online {
+      background: var(--accent-lime);
+      box-shadow: 0 0 8px rgba(200, 255, 50, 0.6);
+    }
+
+    .status-dot.offline {
+      background: var(--status-error);
+    }
+
+    /* ==========================================================================
+       BENTO GRID SYSTEM
+       ========================================================================== */
+    .bento-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 20px;
+    }
+
+    .bento-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: border-color var(--transition-smooth), transform var(--transition-smooth);
+    }
+
+    .bento-card:hover {
+      border-color: var(--border-medium);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .card-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .card-tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent-lime);
+    }
+
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+    }
+
+    .card-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Specific Bento Placements */
+    .col-inspector {
+      grid-column: span 7;
+    }
+
+    .col-telemetry {
+      grid-column: span 5;
+    }
+
+    .col-gallery {
+      grid-column: span 12;
+    }
+
+    .col-benchmark {
+      grid-column: span 7;
+    }
+
+    .col-matrix {
+      grid-column: span 5;
+    }
+
+    /* ==========================================================================
+       IMAGE INSPECTOR & DROPZONE
+       ========================================================================== */
+    .dropzone-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+    }
+
+    .dropzone {
+      border: 1.5px dashed var(--border-medium);
+      border-radius: var(--radius-md);
+      background: var(--bg-surface-subtle);
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: pointer;
+      min-height: 280px;
+      position: relative;
+      transition: border-color var(--transition-fast), background var(--transition-fast);
+      outline: none;
+    }
+
+    .dropzone:hover, .dropzone:focus-visible, .dropzone.drag-active {
+      border-color: var(--accent-lime);
+      background: rgba(200, 255, 50, 0.03);
+    }
+
+    .dropzone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .dropzone-icon {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+      stroke: var(--text-secondary);
+      stroke-width: 1.5;
+      fill: none;
+    }
+
+    .dropzone-prompt {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .dropzone-hint {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+    }
+
+    .dropzone-constraints {
+      margin-top: 14px;
+      display: flex;
+      gap: 8px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+    }
+
+    .dropzone-constraints span {
+      background: var(--bg-surface-elevated);
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* Image Preview Mode */
+    .preview-wrapper {
+      display: none;
+      position: relative;
+      width: 100%;
+      height: 320px;
+      background: #0D0F0A;
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .preview-wrapper.active {
+      display: flex;
+    }
+
+    .preview-img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* Reticle / Viewfinder Crosshairs */
+    .viewfinder-reticle {
+      position: absolute;
+      inset: 12px;
+      pointer-events: none;
+      border: 1px solid rgba(242, 240, 231, 0.1);
+    }
+
+    .viewfinder-reticle::before,
+    .viewfinder-reticle::after {
+      content: "";
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-color: var(--accent-lime);
+      border-style: solid;
+    }
+
+    .viewfinder-reticle::before {
+      top: -1px;
+      left: -1px;
+      border-width: 2px 0 0 2px;
+    }
+
+    .viewfinder-reticle::after {
+      bottom: -1px;
+      right: -1px;
+      border-width: 0 2px 2px 0;
+    }
+
+    /* Scanline Animation */
+    .scanline {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--accent-lime);
+      box-shadow: 0 0 12px var(--accent-lime);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .preview-wrapper.scanning .scanline {
+      opacity: 0.9;
+      animation: scanSweep 1.2s ease-in-out infinite alternate;
+    }
+
+    @keyframes scanSweep {
+      0% { top: 0%; }
+      100% { top: 100%; }
+    }
+
+    .preview-meta-bar {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      right: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 12px;
+      background: rgba(20, 22, 16, 0.88);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .inspector-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all var(--transition-fast);
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--accent-lime);
+      color: #141610;
+      font-weight: 600;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #D8FF5A;
+      box-shadow: 0 0 12px rgba(200, 255, 50, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--bg-surface-elevated);
+      color: var(--text-primary);
+      border-color: var(--border-subtle);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      border-color: var(--border-medium);
+      background: #2A2F23;
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .banner-error {
+      background: rgba(255, 102, 84, 0.1);
+      border: 1px solid var(--status-error);
+      color: #FFB3A8;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-family: var(--font-mono);
+      display: none;
+    }
+
+    .banner-error.visible {
+      display: block;
+    }
+
+    /* ==========================================================================
+       PREDICTION TELEMETRY CARD
+       ========================================================================== */
+    .telemetry-body {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      flex: 1;
+    }
+
+    .primary-decision-box {
+      background: var(--bg-surface-subtle);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+    }
+
+    .decision-label-sub {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .decision-classification {
+      font-family: var(--font-display);
+      font-size: 44px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      color: var(--text-secondary);
+    }
+
+    .decision-classification.dog {
+      color: var(--accent-lime);
+    }
+
+    .decision-classification.cat {
+      color: var(--status-cat);
+    }
+
+    .decision-confidence-badge {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text-primary);
+      margin-top: 4px;
+    }
+
+    .decision-confidence-badge span {
+      font-weight: 600;
+      color: var(--accent-lime);
+    }
+
+    /* Dual Probability Meters */
+    .prob-meters-group {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .prob-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .prob-meta {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+
+    .prob-name {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .prob-val {
+      color: var(--text-secondary);
+    }
+
+    .prob-track {
+      width: 100%;
+      height: 8px;
+      background: var(--bg-surface-elevated);
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .prob-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      transition: width var(--transition-smooth);
+    }
+
+    .prob-fill.dog {
+      background: var(--accent-lime);
+    }
+
+    .prob-fill.cat {
+      background: var(--status-cat);
+    }
+
+    /* Decision Threshold Callout */
+    .threshold-guide {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .metrics-pills-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .mini-metric-pill {
+      background: var(--bg-surface-subtle);
+      border: 1px solid var(--border-subtle);
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .mini-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .mini-value {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* ==========================================================================
+       REAL SAMPLE GALLERY (10 TEST PHOTOS)
+       ========================================================================== */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .gallery-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .sample-card {
+      background: var(--bg-surface-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      cursor: pointer;
+      position: relative;
+      transition: all var(--transition-fast);
+      outline: none;
+    }
+
+    .sample-card:hover, .sample-card:focus-visible {
+      border-color: var(--accent-lime);
+      transform: translateY(-2px);
+      background: var(--bg-surface-elevated);
+    }
+
+    .sample-card.active {
+      border-color: var(--accent-lime);
+      box-shadow: 0 0 0 1px var(--accent-lime);
+    }
+
+    .sample-thumb-wrapper {
+      width: 100%;
+      height: 110px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: #0E100A;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sample-thumb {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .sample-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+
+    .sample-fname {
+      color: var(--text-secondary);
+      font-size: 10.5px;
+    }
+
+    .sample-tag {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      text-transform: uppercase;
+    }
+
+    .sample-tag.cat {
+      background: rgba(120, 183, 255, 0.15);
+      color: var(--status-cat);
+      border: 1px solid rgba(120, 183, 255, 0.3);
+    }
+
+    .sample-tag.dog {
+      background: rgba(200, 255, 50, 0.15);
+      color: var(--accent-lime);
+      border: 1px solid var(--accent-lime-border);
+    }
+
+    /* ==========================================================================
+       BENCHMARK PERFORMANCE & CONFUSION MATRIX
+       ========================================================================== */
+    .benchmark-disclaimer {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      border-left: 2px solid var(--accent-lime);
+      padding-left: 10px;
+      font-family: var(--font-mono);
+    }
+
+    .benchmark-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 650px) {
+      .benchmark-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .benchmark-stat-card {
+      background: var(--bg-surface-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .b-stat-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .b-stat-val {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--accent-lime);
+    }
+
+    .b-stat-sub {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--text-secondary);
+    }
+
+    .matrix-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .matrix-img {
+      max-width: 100%;
+      height: auto;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-medium);
+      background: #0E100A;
+    }
+
+    .matrix-legend {
+      display: flex;
+      gap: 16px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .matrix-legend span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .matrix-legend .legend-sq {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+    }
+
+    /* Architecture Flow Strip */
+    .arch-flow-strip {
+      background: var(--bg-surface-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+
+    .arch-step {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      white-space: nowrap;
+      color: var(--text-secondary);
+    }
+
+    .arch-step strong {
+      color: var(--text-primary);
+    }
+
+    .arch-arrow {
+      color: var(--accent-lime);
+      user-select: none;
+    }
+
+    /* ==========================================================================
+       FOOTER
+       ========================================================================== */
+    .footer {
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .footer a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color var(--transition-fast);
+    }
+
+    .footer a:hover {
+      color: var(--accent-lime);
+    }
+
+    /* ==========================================================================
+       ACCESSIBILITY & PREFERS-REDUCED-MOTION
+       ========================================================================== */
+    /* ==========================================================================
+       SIDEBAR / BACKGROUND PET STICKERS LAYER (DOG & CAT LAB THEME)
+       ========================================================================== */
+    .pet-stickers-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .sticker-item {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(24, 27, 19, 0.88);
+      backdrop-filter: blur(6px);
+      border: 2px solid rgba(242, 240, 231, 0.4);
+      border-radius: 16px;
+      padding: 12px 16px;
+      box-shadow: 
+        0 12px 30px rgba(0, 0, 0, 0.55),
+        0 2px 6px rgba(0, 0, 0, 0.4),
+        inset 0 1px 1px rgba(255, 255, 255, 0.2);
+      filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.5));
+      animation: stickerBob 6s ease-in-out infinite alternate;
+      transition: transform var(--transition-smooth), opacity var(--transition-smooth);
+    }
+
+    @keyframes stickerBob {
+      0% { transform: translateY(0px) rotate(var(--rot, 0deg)); }
+      100% { transform: translateY(-8px) rotate(var(--rot, 0deg)); }
+    }
+
+    /* Tape accent on top of stickers */
+    .sticker-item.has-tape::before {
+      content: "";
+      position: absolute;
+      top: -9px;
+      left: 50%;
+      transform: translateX(-50%) rotate(-3deg);
+      width: 46px;
+      height: 16px;
+      background: rgba(242, 240, 231, 0.22);
+      border: 1px dashed rgba(242, 240, 231, 0.35);
+      border-radius: 2px;
+      backdrop-filter: blur(2px);
+    }
+
+    .sticker-icon-svg {
+      width: 44px;
+      height: 44px;
+      display: block;
+    }
+
+    .sticker-title {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+      margin-top: 4px;
+      white-space: nowrap;
+    }
+
+    .sticker-sub {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--accent-lime);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    /* Stamp variant */
+    .sticker-stamp {
+      border-radius: 50%;
+      width: 96px;
+      height: 96px;
+      padding: 8px;
+      border: 2px dashed rgba(242, 240, 231, 0.5);
+      background: rgba(20, 22, 16, 0.92);
+      text-align: center;
+    }
+
+    .sticker-stamp-inner {
+      width: 100%;
+      height: 100%;
+      border: 1px solid rgba(242, 240, 231, 0.2);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+    }
+
+    /* --- SPECIFIC SIDE POSITIONS (Outside 1360px container) --- */
+    /* Left Flank */
+    .stk-l1 {
+      --rot: -8deg;
+      top: 90px;
+      left: max(16px, calc(50vw - 770px));
+      animation-delay: 0s;
+    }
+
+    .stk-l2 {
+      --rot: 6deg;
+      top: 360px;
+      left: max(18px, calc(50vw - 785px));
+      animation-delay: 1.5s;
+    }
+
+    .stk-l3 {
+      --rot: -11deg;
+      top: 640px;
+      left: max(16px, calc(50vw - 775px));
+      animation-delay: 3s;
+    }
+
+    /* Right Flank */
+    .stk-r1 {
+      --rot: 9deg;
+      top: 100px;
+      right: max(16px, calc(50vw - 770px));
+      animation-delay: 0.8s;
+    }
+
+    .stk-r2 {
+      --rot: -6deg;
+      top: 380px;
+      right: max(18px, calc(50vw - 785px));
+      animation-delay: 2.2s;
+    }
+
+    .stk-r3 {
+      --rot: 12deg;
+      top: 660px;
+      right: max(16px, calc(50vw - 775px));
+      animation-delay: 3.8s;
+    }
+
+    /* Floating Pill Badge */
+    .sticker-pill {
+      border-radius: 999px;
+      padding: 6px 14px;
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .stk-l4 {
+      --rot: 5deg;
+      top: 880px;
+      left: max(20px, calc(50vw - 765px));
+      animation-delay: 4.5s;
+    }
+
+    .stk-r4 {
+      --rot: -7deg;
+      top: 890px;
+      right: max(20px, calc(50vw - 765px));
+      animation-delay: 5s;
+    }
+
+    /* Hide stickers on screens under 1400px so they NEVER overlap the main cards */
+    @media (max-width: 1420px) {
+      .pet-stickers-layer {
+        display: none !important;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      .sticker-item {
+        animation: none !important;
+      }
+    }
+
+    @media (max-width: 960px) {
+      .col-inspector, .col-telemetry, .col-benchmark, .col-matrix {
+        grid-column: span 12;
+      }
+      .brand-title {
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BACKGROUND & SIDES PET STICKERS (NON-INTRUSIVE LAB MARGIN ACCENTS) -->
+  <div class="pet-stickers-layer" aria-hidden="true">
+    
+    <!-- LEFT FLANK 1: Canine Lab Radar Badge -->
+    <div class="sticker-item stk-l1 has-tape">
+      <svg class="sticker-icon-svg" viewBox="0 0 48 48" fill="none">
+        <!-- Dog Silhouette Vector -->
+        <path d="M14 36c0-6 4-10 10-10h4v-6l-4-4c-1-1-2-3-2-5 0-3 2-5 5-5s5 2 5 5v1l3 3 5 1c2 0 4 2 4 4v5c0 2-2 4-4 4h-3v12H14z" fill="#F2F0E7" />
+        <!-- Perky Ears -->
+        <polygon points="26,6 30,2 32,8" fill="#C8FF32" />
+        <polygon points="21,9 18,3 23,6" fill="#C8FF32" />
+        <!-- Collar -->
+        <rect x="22" y="24" width="10" height="3" rx="1.5" fill="#C8FF32" />
+        <circle cx="27" cy="29" r="2" fill="#F2F0E7" />
+        <!-- Radar Arc -->
+        <circle cx="24" cy="24" r="21" stroke="#C8FF32" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.6" />
+      </svg>
+      <span class="sticker-title">Canine Unit</span>
+      <span class="sticker-sub">K-9 &bull; Radar 01</span>
+    </div>
+
+    <!-- LEFT FLANK 2: Feline Paw Print Stamp -->
+    <div class="sticker-item sticker-stamp stk-l2">
+      <div class="sticker-stamp-inner">
+        <svg viewBox="0 0 32 32" width="28" height="28" fill="#78B7FF">
+          <!-- Main Pad -->
+          <ellipse cx="16" cy="21" rx="6.5" ry="5" />
+          <!-- 4 Toe Beans -->
+          <ellipse cx="9" cy="14" rx="2.5" ry="3.5" transform="rotate(-18 9 14)" />
+          <ellipse cx="13.5" cy="10" rx="2.5" ry="3.8" transform="rotate(-6 13.5 10)" />
+          <ellipse cx="18.5" cy="10" rx="2.5" ry="3.8" transform="rotate(6 18.5 10)" />
+          <ellipse cx="23" cy="14" rx="2.5" ry="3.5" transform="rotate(18 23 14)" />
+        </svg>
+        <span style="font-family:var(--font-mono);font-size:7.5px;color:#F2F0E7;letter-spacing:0.06em;font-weight:700;">FELINE VERIFIED</span>
+        <span style="font-family:var(--font-mono);font-size:7px;color:#78B7FF;">96.09% ACC</span>
+      </div>
+    </div>
+
+    <!-- LEFT FLANK 3: Good Dog Bone Sticker -->
+    <div class="sticker-item stk-l3 has-tape">
+      <svg class="sticker-icon-svg" viewBox="0 0 52 28" fill="none">
+        <!-- Dog Bone Vector -->
+        <path d="M12 8c-2-3-7-3-9 0s0 7 2 8c-2 1-3 5-1 8s7 3 9 0h28c2 3 7 3 9 0s0-7-2-8c2-1 3-5 1-8s-7-3-9 0H12z" fill="#F2F0E7" stroke="#141610" stroke-width="1.5" />
+        <!-- Heart Emboss -->
+        <path d="M26 11c-1.5-2-4-1-4 1 0 2 4 5 4 5s4-3 4-5c0-2-2.5-3-4-1z" fill="#C8FF32" />
+      </svg>
+      <span class="sticker-title">99.05% Recall</span>
+      <span class="sticker-sub">Good Doggo &bull; TFDS</span>
+    </div>
+
+    <!-- LEFT FLANK 4: "MEOW" Frequency Pill -->
+    <div class="sticker-item sticker-pill stk-l4">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#78B7FF" stroke-width="2">
+        <path d="M4 12h2l2-6 4 12 4-8 2 4h4" />
+      </svg>
+      <span style="font-family:var(--font-mono);font-size:10px;font-weight:700;color:#F2F0E7;">MEOW // 432 Hz</span>
+    </div>
+
+    <!-- RIGHT FLANK 1: Cyber Cat Whiskers Badge -->
+    <div class="sticker-item stk-r1 has-tape">
+      <svg class="sticker-icon-svg" viewBox="0 0 48 48" fill="none">
+        <!-- Cat Silhouette with Ears -->
+        <path d="M10 38c0-7 6-12 14-12s14 5 14 12v2H10v-2z" fill="#F2F0E7" />
+        <!-- Cat Head & Pointed Ears -->
+        <polygon points="12,18 16,6 22,14" fill="#C8FF32" />
+        <polygon points="36,18 32,6 26,14" fill="#C8FF32" />
+        <circle cx="24" cy="18" r="9" fill="#F2F0E7" />
+        <!-- Cat Eyes -->
+        <ellipse cx="21" cy="17" rx="1.5" ry="2.5" fill="#141610" />
+        <ellipse cx="27" cy="17" rx="1.5" ry="2.5" fill="#141610" />
+        <!-- Nose & Whiskers -->
+        <polygon points="23,20 25,20 24,22" fill="#78B7FF" />
+        <line x1="16" y1="20" x2="10" y2="19" stroke="#141610" stroke-width="1.2" />
+        <line x1="16" y1="22" x2="9" y2="23" stroke="#141610" stroke-width="1.2" />
+        <line x1="32" y1="20" x2="38" y2="19" stroke="#141610" stroke-width="1.2" />
+        <line x1="32" y1="22" x2="39" y2="23" stroke="#141610" stroke-width="1.2" />
+      </svg>
+      <span class="sticker-title">Cyber Feline</span>
+      <span class="sticker-sub">Sightline &bull; Bio-Vision</span>
+    </div>
+
+    <!-- RIGHT FLANK 2: Canine Paw Print Stamp -->
+    <div class="sticker-item sticker-stamp stk-r2">
+      <div class="sticker-stamp-inner">
+        <svg viewBox="0 0 32 32" width="28" height="28" fill="#C8FF32">
+          <!-- Main Canine Pad -->
+          <path d="M16 25c-4 0-7-3-7-6 0-3 3-5 7-5s7 2 7 5c0 3-3 6-7 6z" />
+          <!-- 4 Dog Toes with Nails -->
+          <ellipse cx="9" cy="12" rx="2.6" ry="3.8" transform="rotate(-15 9 12)" />
+          <ellipse cx="14" cy="8" rx="2.6" ry="4" transform="rotate(-5 14 8)" />
+          <ellipse cx="18" cy="8" rx="2.6" ry="4" transform="rotate(5 18 8)" />
+          <ellipse cx="23" cy="12" rx="2.6" ry="3.8" transform="rotate(15 23 12)" />
+        </svg>
+        <span style="font-family:var(--font-mono);font-size:7.5px;color:#F2F0E7;letter-spacing:0.06em;font-weight:700;">CANINE CORPS</span>
+        <span style="font-family:var(--font-mono);font-size:7px;color:#C8FF32;">MOBILENETV2</span>
+      </div>
+    </div>
+
+    <!-- RIGHT FLANK 3: Fishbone Treat Sticker -->
+    <div class="sticker-item stk-r3 has-tape">
+      <svg class="sticker-icon-svg" viewBox="0 0 52 28" fill="none">
+        <!-- Fish Head -->
+        <path d="M12 14L4 6v16l8-8z" fill="#F2F0E7" stroke="#141610" stroke-width="1.2" />
+        <!-- Eye -->
+        <circle cx="7" cy="12" r="1.5" fill="#78B7FF" />
+        <!-- Spine -->
+        <line x1="12" y1="14" x2="42" y2="14" stroke="#F2F0E7" stroke-width="2.5" />
+        <!-- Ribs -->
+        <line x1="18" y1="7" x2="22" y2="21" stroke="#F2F0E7" stroke-width="2" />
+        <line x1="26" y1="7" x2="30" y2="21" stroke="#F2F0E7" stroke-width="2" />
+        <line x1="34" y1="7" x2="38" y2="21" stroke="#F2F0E7" stroke-width="2" />
+        <!-- Tail -->
+        <path d="M42 14l6-7v14l-6-7z" fill="#C8FF32" />
+      </svg>
+      <span class="sticker-title">Cat Approved</span>
+      <span class="sticker-sub">Crispy Bone &bull; 100%</span>
+    </div>
+
+    <!-- RIGHT FLANK 4: "WOOF" Heart Badge -->
+    <div class="sticker-item sticker-pill stk-r4">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="#C8FF32">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+      </svg>
+      <span style="font-family:var(--font-mono);font-size:10px;font-weight:700;color:#F2F0E7;">WOOF // 10/10 GOOD</span>
+    </div>
+
+  </div>
+
+  <div class="container">
+    
+    <!-- MASTHEAD -->
+    <header class="masthead">
+      <div class="masthead-brand">
+        <div class="brand-eyebrow">AVIP 2026 // Task 1 Benchmark</div>
+        <h1 class="brand-title">SIGHTLINE // Pet Vision Laboratory</h1>
+        <div class="brand-subtitle">MobileNetV2 Deep Transfer Learning (ImageNet-1k Backbone + GAP2D)</div>
+      </div>
+      
+      <div class="masthead-meta">
+        <div class="meta-chip">
+          <span>Arch:</span>
+          <strong>MobileNetV2</strong>
+        </div>
+        <div class="meta-chip">
+          <span>Resolution:</span>
+          <strong>160×160 RGB</strong>
+        </div>
+        <div class="status-pill" id="statusPill" title="API Connectivity Status">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="statusText">Connecting to API...</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN BENTO GRID -->
+    <main class="bento-grid">
+      
+      <!-- CARD 1: IMAGE INSPECTOR & DROPZONE -->
+      <section class="bento-card col-inspector" aria-labelledby="inspectorHeading">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-tag">Input Telemetry</span>
+            <h2 class="card-title" id="inspectorHeading">Image Ingestion & Viewfinder</h2>
+            <p class="card-desc">Drag & drop natural photographs or select a sample from the held-out test split</p>
+          </div>
+        </div>
+
+        <div class="dropzone-container">
+          <!-- Dropzone State -->
+          <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload photo for inference">
+            <input type="file" id="fileInput" accept=".jpg, .jpeg, .png, .webp" />
+            <svg class="dropzone-icon" viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <div class="dropzone-prompt">Drop cat or dog photo here, or click to browse</div>
+            <div class="dropzone-hint">Raw image processed in-memory via PIL (no permanent disk storage)</div>
+            <div class="dropzone-constraints">
+              <span>JPEG, PNG, WebP</span>
+              <span>Max 10 MB</span>
+              <span>Resized to 160×160 Bilinear</span>
+            </div>
+          </div>
+
+          <!-- Active Preview State -->
+          <div class="preview-wrapper" id="previewWrapper">
+            <img id="previewImg" class="preview-img" alt="Uploaded photo preview" />
+            <div class="viewfinder-reticle"></div>
+            <div class="scanline" id="scanline"></div>
+            
+            <div class="preview-meta-bar">
+              <span id="previewMetaFilename">filename.jpg</span>
+              <span id="previewMetaDimensions">--- × ---</span>
+            </div>
+          </div>
+
+          <!-- Error Alert Banner -->
+          <div class="banner-error" id="bannerError" role="alert"></div>
+
+          <!-- Actions Bar -->
+          <div class="inspector-actions">
+            <button class="btn btn-secondary" id="btnReset" type="button" disabled>
+              Clear Viewfinder
+            </button>
+            <button class="btn btn-primary" id="btnRunInference" type="button" disabled>
+              Run MobileNetV2 Inference
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- CARD 2: REAL-TIME PREDICTION TELEMETRY -->
+      <section class="bento-card col-telemetry" aria-labelledby="telemetryHeading">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-tag">Inference Output</span>
+            <h2 class="card-title" id="telemetryHeading">Classification & Calibrated Scores</h2>
+            <p class="card-desc">Sigmoid logit mapping with strict 0.5000 decision boundary</p>
+          </div>
+        </div>
+
+        <div class="telemetry-body">
+          <!-- Big Classification Callout -->
+          <div class="primary-decision-box">
+            <div class="decision-label-sub">Predicted Anatomical Class</div>
+            <div class="decision-classification" id="decisionLabel">AWAITING INPUT</div>
+            <div class="decision-confidence-badge" id="decisionConfidenceText">
+              Model Confidence: <span id="confidencePct">--%</span>
+            </div>
+          </div>
+
+          <!-- Dual Class Probability Meters -->
+          <div class="prob-meters-group">
+            <!-- Dog / Canine Meter -->
+            <div class="prob-row">
+              <div class="prob-meta">
+                <span class="prob-name">Canine : P(Dog)</span>
+                <span class="prob-val" id="probDogVal">0.0000 (0.0%)</span>
+              </div>
+              <div class="prob-track">
+                <div class="prob-fill dog" id="fillDog" style="width: 0%;"></div>
+              </div>
+            </div>
+
+            <!-- Cat / Feline Meter -->
+            <div class="prob-row">
+              <div class="prob-meta">
+                <span class="prob-name">Feline : P(Cat)</span>
+                <span class="prob-val" id="probCatVal">0.0000 (0.0%)</span>
+              </div>
+              <div class="prob-track">
+                <div class="prob-fill cat" id="fillCat" style="width: 0%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Threshold Rule -->
+          <div class="threshold-guide">
+            <span>Decision Boundary: P(Dog) &ge; 0.50 &rarr; DOG</span>
+            <span id="rawLogitDisplay">Logit: 0.0000</span>
+          </div>
+
+          <!-- Technical Metrics Row -->
+          <div class="metrics-pills-row">
+            <div class="mini-metric-pill">
+              <span class="mini-label">Inference Latency</span>
+              <span class="mini-value" id="latencyDisplay">-- ms</span>
+            </div>
+            <div class="mini-metric-pill">
+              <span class="mini-label">Processing Pipeline</span>
+              <span class="mini-value">[-1, 1] Scaling</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CARD 3: HELD-OUT VERIFICATION SAMPLES (10 REAL PHOTOS) -->
+      <section class="bento-card col-gallery" aria-labelledby="galleryHeading">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-tag">Held-Out Test Set Verification</span>
+            <h2 class="card-title" id="galleryHeading">Empirical Sample Suite (10 Real Benchmark Photos)</h2>
+            <p class="card-desc">Click any photo to ingest into the inspector and verify live against the trained model</p>
+          </div>
+        </div>
+
+        <div class="gallery-grid" id="sampleGallery">
+          <!-- Dynamically populated or fallback rendered via JS -->
+        </div>
+      </section>
+
+      <!-- CARD 4: HELD-OUT BENCHMARK PERFORMANCE -->
+      <section class="bento-card col-benchmark" aria-labelledby="benchmarkHeading">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-tag">Validation Telemetry</span>
+            <h2 class="card-title" id="benchmarkHeading">Held-Out Test Set Metrics (N = 2,328)</h2>
+            <p class="card-desc">Strictly measured on held-out test split from TFDS, not live uploads</p>
+          </div>
+        </div>
+
+        <div class="benchmark-disclaimer">
+          Note: These performance figures reflect held-out benchmark evaluation recorded in <code>outputs/metrics.json</code> after 2-phase fine-tuning.
+        </div>
+
+        <div class="benchmark-stats-grid">
+          <div class="benchmark-stat-card">
+            <span class="b-stat-label">Test Accuracy</span>
+            <span class="b-stat-val" id="metricAcc">96.09%</span>
+            <span class="b-stat-sub">2,237 / 2,328 correct</span>
+          </div>
+          <div class="benchmark-stat-card">
+            <span class="b-stat-label">Precision (Dog)</span>
+            <span class="b-stat-val" id="metricPrec">93.50%</span>
+            <span class="b-stat-sub">Low false positives</span>
+          </div>
+          <div class="benchmark-stat-card">
+            <span class="b-stat-label">Recall (Dog)</span>
+            <span class="b-stat-val" id="metricRec">99.05%</span>
+            <span class="b-stat-sub">High sensitivity</span>
+          </div>
+          <div class="benchmark-stat-card">
+            <span class="b-stat-label">F1-Score</span>
+            <span class="b-stat-val" id="metricF1">96.19%</span>
+            <span class="b-stat-sub">Harmonic mean</span>
+          </div>
+        </div>
+
+        <!-- Architecture Flow -->
+        <div class="card-tag" style="margin-top: 8px;">Inference Pipeline Architecture</div>
+        <div class="arch-flow-strip">
+          <div class="arch-step">Input <strong>160×160×3</strong></div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-step">Preprocess <strong>[-1, 1]</strong></div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-step">MobileNetV2 <strong>Base (Frozen)</strong></div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-step">GlobalAveragePooling2D <strong>(1280-d)</strong></div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-step">Dropout <strong>(0.3)</strong></div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-step">Dense(1) <strong>Logit</strong></div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-step">Sigmoid <strong>P(Dog)</strong></div>
+        </div>
+      </section>
+
+      <!-- CARD 5: CONFUSION MATRIX DIAGNOSTICS -->
+      <section class="bento-card col-matrix" aria-labelledby="matrixHeading">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-tag">Error Diagnostics</span>
+            <h2 class="card-title" id="matrixHeading">Confusion Matrix Analysis</h2>
+            <p class="card-desc">Ground truth vs predicted on 2,328 test images</p>
+          </div>
+        </div>
+
+        <div class="matrix-wrapper">
+          <img src="/outputs/confusion_matrix.png" alt="Confusion Matrix — Cats vs Dogs Test Set" class="matrix-img" onerror="this.style.display='none'" />
+          
+          <div class="matrix-legend">
+            <span><div class="legend-sq" style="background:#2C5282;"></div> True Cat: 1,083</span>
+            <span><div class="legend-sq" style="background:#BEE3F8;"></div> False Dog: 81</span>
+            <span><div class="legend-sq" style="background:#C8FF32;"></div> True Dog: 1,153</span>
+            <span><div class="legend-sq" style="background:#E2E8F0;"></div> False Cat: 11</span>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div>Arithmatrix Virtual Internship Program (AVIP 2026) &bull; Task 1 — Cats vs Dogs MobileNetV2</div>
+      <div style="display: flex; gap: 16px;">
+        <a href="https://github.com/rshamith777-cpu/AIML_1_ImageClassification_byte" target="_blank" rel="noopener">GitHub Repository</a>
+        <a href="/outputs/metrics.json" target="_blank">raw metrics.json</a>
+        <a href="/outputs/sample_predictions.csv" target="_blank">sample_predictions.csv</a>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- CLIENT-SIDE APPLICATION LOGIC -->
+  <script>
+    // Embedded real sample fallback data from outputs/sample_predictions.csv
+    const LOCAL_SAMPLES = [
+      { filename: "cat_01.jpg", ground_truth: "CAT", p_dog: 0.0023, confidence: "99.77%" },
+      { filename: "cat_02.jpg", ground_truth: "CAT", p_dog: 0.0220, confidence: "97.80%" },
+      { filename: "cat_03.jpg", ground_truth: "CAT", p_dog: 0.0431, confidence: "95.69%" },
+      { filename: "cat_04.jpg", ground_truth: "CAT", p_dog: 0.1114, confidence: "88.86%" },
+      { filename: "cat_05.jpg", ground_truth: "CAT", p_dog: 0.0040, confidence: "99.60%" },
+      { filename: "dog_01.jpg", ground_truth: "DOG", p_dog: 0.8987, confidence: "89.87%" },
+      { filename: "dog_02.jpg", ground_truth: "DOG", p_dog: 0.9362, confidence: "93.62%" },
+      { filename: "dog_03.jpg", ground_truth: "DOG", p_dog: 0.9286, confidence: "92.86%" },
+      { filename: "dog_04.jpg", ground_truth: "DOG", p_dog: 0.6855, confidence: "68.55%" },
+      { filename: "dog_05.jpg", ground_truth: "DOG", p_dog: 0.9008, confidence: "90.08%" }
+    ];
+
+    // State
+    let currentImagePayload = null; // base64 or sample filename
+    let currentPayloadType = null;  // 'base64' or 'sample'
+    let isProcessing = false;
+
+    // DOM Elements
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const previewWrapper = document.getElementById('previewWrapper');
+    const previewImg = document.getElementById('previewImg');
+    const previewMetaFilename = document.getElementById('previewMetaFilename');
+    const previewMetaDimensions = document.getElementById('previewMetaDimensions');
+    const btnReset = document.getElementById('btnReset');
+    const btnRunInference = document.getElementById('btnRunInference');
+    const bannerError = document.getElementById('bannerError');
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    const sampleGallery = document.getElementById('sampleGallery');
+
+    // Telemetry Elements
+    const decisionLabel = document.getElementById('decisionLabel');
+    const confidencePct = document.getElementById('confidencePct');
+    const probDogVal = document.getElementById('probDogVal');
+    const probCatVal = document.getElementById('probCatVal');
+    const fillDog = document.getElementById('fillDog');
+    const fillCat = document.getElementById('fillCat');
+    const rawLogitDisplay = document.getElementById('rawLogitDisplay');
+    const latencyDisplay = document.getElementById('latencyDisplay');
+
+    // Check API Health on Load
+    async function checkHealth() {
+      try {
+        const res = await fetch('/api/health');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (data.model_loaded) {
+          statusDot.className = 'status-dot online';
+          statusText.textContent = 'Model Online (GPU Ready)';
+        } else {
+          statusDot.className = 'status-dot offline';
+          statusText.textContent = data.error ? 'Model Unavailable' : 'Degraded';
+          showError(`Model not ready: ${data.error || 'Check server logs.'}`);
+        }
+      } catch (err) {
+        statusDot.className = 'status-dot offline';
+        statusText.textContent = 'API Offline';
+      }
+    }
+
+    // Load Metrics from API
+    async function loadMetrics() {
+      try {
+        const res = await fetch('/api/metrics');
+        if (res.ok) {
+          const data = await res.json();
+          const m = data.metrics;
+          if (m.accuracy) document.getElementById('metricAcc').textContent = `${(m.accuracy * 100).toFixed(2)}%`;
+          if (m.precision_dog) document.getElementById('metricPrec').textContent = `${(m.precision_dog * 100).toFixed(2)}%`;
+          if (m.recall_dog) document.getElementById('metricRec').textContent = `${(m.recall_dog * 100).toFixed(2)}%`;
+          if (m.f1_dog) document.getElementById('metricF1').textContent = `${(m.f1_dog * 100).toFixed(2)}%`;
+        }
+      } catch (err) {
+        // Fallbacks already in HTML
+      }
+    }
+
+    // Render Gallery
+    async function initGallery() {
+      let samples = LOCAL_SAMPLES;
+      try {
+        const res = await fetch('/api/samples');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.samples && data.samples.length > 0) {
+            samples = data.samples;
+          }
+        }
+      } catch (e) {
+        // use fallback
+      }
+
+      sampleGallery.innerHTML = '';
+      samples.forEach((s) => {
+        const card = document.createElement('div');
+        card.className = 'sample-card';
+        card.tabIndex = 0;
+        card.setAttribute('role', 'button');
+        card.setAttribute('aria-label', `Select ${s.filename}`);
+
+        const url = `/outputs/sample_inferences/${s.filename}`;
+        card.innerHTML = `
+          <div class="sample-thumb-wrapper">
+            <img src="${url}" class="sample-thumb" alt="${s.filename}" loading="lazy" />
+          </div>
+          <div class="sample-info">
+            <span class="sample-fname">${s.filename}</span>
+            <span class="sample-tag ${s.ground_truth.toLowerCase()}">${s.ground_truth}</span>
+          </div>
+        `;
+
+        const selectSample = () => {
+          document.querySelectorAll('.sample-card').forEach(c => c.classList.remove('active'));
+          card.classList.add('active');
+          loadSampleIntoInspector(s);
+        };
+
+        card.addEventListener('click', selectSample);
+        card.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            selectSample();
+          }
+        });
+
+        sampleGallery.appendChild(card);
+      });
+    }
+
+    // Load sample into inspector
+    function loadSampleIntoInspector(sample) {
+      hideError();
+      currentPayloadType = 'sample';
+      currentImagePayload = sample.filename;
+
+      const url = `/outputs/sample_inferences/${sample.filename}`;
+      previewImg.src = url;
+      previewMetaFilename.textContent = sample.filename;
+      previewMetaDimensions.textContent = "TFDS Held-Out Photo";
+
+      dropzone.style.display = 'none';
+      previewWrapper.classList.add('active');
+      btnReset.disabled = false;
+      btnRunInference.disabled = false;
+
+      // Automatically run inference on sample select
+      runInference();
+    }
+
+    // File Ingestion Handler
+    function handleFile(file) {
+      hideError();
+      if (!file) return;
+
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(file.type.toLowerCase())) {
+        showError(`Unsupported file format (${file.type}). Please select a JPEG, PNG, or WebP photo.`);
+        return;
+      }
+
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        showError(`File too large (${(file.size / (1024 * 1024)).toFixed(1)} MB). Limit is 10 MB.`);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        currentPayloadType = 'base64';
+        currentImagePayload = dataUrl;
+
+        previewImg.src = dataUrl;
+        previewMetaFilename.textContent = file.name;
+        
+        // Measure natural dimensions
+        const tmpImg = new Image();
+        tmpImg.onload = () => {
+          previewMetaDimensions.textContent = `${tmpImg.naturalWidth} × ${tmpImg.naturalHeight} px`;
+        };
+        tmpImg.src = dataUrl;
+
+        dropzone.style.display = 'none';
+        previewWrapper.classList.add('active');
+        btnReset.disabled = false;
+        btnRunInference.disabled = false;
+
+        document.querySelectorAll('.sample-card').forEach(c => c.classList.remove('active'));
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Drag and Drop Events
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('drag-active');
+    });
+
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('drag-active');
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('drag-active');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        handleFile(e.target.files[0]);
+      }
+    });
+
+    // Reset Viewfinder
+    btnReset.addEventListener('click', () => {
+      currentImagePayload = null;
+      currentPayloadType = null;
+      fileInput.value = '';
+      previewImg.src = '';
+      previewWrapper.classList.remove('active', 'scanning');
+      dropzone.style.display = 'flex';
+      btnReset.disabled = true;
+      btnRunInference.disabled = true;
+      hideError();
+      resetTelemetry();
+      document.querySelectorAll('.sample-card').forEach(c => c.classList.remove('active'));
+    });
+
+    // Run Inference Request
+    async function runInference() {
+      if (!currentImagePayload || isProcessing) return;
+      isProcessing = true;
+      hideError();
+
+      btnRunInference.disabled = true;
+      btnRunInference.textContent = 'Analyzing...';
+      previewWrapper.classList.add('scanning');
+
+      try {
+        let payload = {};
+        if (currentPayloadType === 'sample') {
+          payload = { sample_filename: currentImagePayload };
+        } else {
+          payload = { image: currentImagePayload, filename: previewMetaFilename.textContent };
+        }
+
+        const res = await fetch('/api/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || `Server error (HTTP ${res.status})`);
+        }
+
+        const data = await res.json();
+        renderPrediction(data);
+      } catch (err) {
+        showError(`Inference failed: ${err.message}`);
+      } finally {
+        isProcessing = false;
+        previewWrapper.classList.remove('scanning');
+        btnRunInference.disabled = false;
+        btnRunInference.textContent = 'Run MobileNetV2 Inference';
+      }
+    }
+
+    btnRunInference.addEventListener('click', runInference);
+
+    // Update Telemetry Display
+    function renderPrediction(data) {
+      const isDog = data.prediction === 'DOG';
+      decisionLabel.textContent = data.prediction;
+      decisionLabel.className = `decision-classification ${isDog ? 'dog' : 'cat'}`;
+      
+      confidencePct.textContent = data.confidence_pct;
+      
+      const pDog = data.prob_dog;
+      const pCat = data.prob_cat;
+
+      probDogVal.textContent = `${pDog.toFixed(4)} (${(pDog * 100).toFixed(1)}%)`;
+      probCatVal.textContent = `${pCat.toFixed(4)} (${(pCat * 100).toFixed(1)}%)`;
+
+      fillDog.style.width = `${(pDog * 100).toFixed(1)}%`;
+      fillCat.style.width = `${(pCat * 100).toFixed(1)}%`;
+
+      rawLogitDisplay.textContent = `Raw Logit: ${data.logit >= 0 ? '+' : ''}${data.logit.toFixed(4)}`;
+      latencyDisplay.textContent = `${data.latency_ms} ms`;
+    }
+
+    function resetTelemetry() {
+      decisionLabel.textContent = 'AWAITING INPUT';
+      decisionLabel.className = 'decision-classification';
+      confidencePct.textContent = '--%';
+      probDogVal.textContent = '0.0000 (0.0%)';
+      probCatVal.textContent = '0.0000 (0.0%)';
+      fillDog.style.width = '0%';
+      fillCat.style.width = '0%';
+      rawLogitDisplay.textContent = 'Logit: 0.0000';
+      latencyDisplay.textContent = '-- ms';
+    }
+
+    function showError(msg) {
+      bannerError.textContent = msg;
+      bannerError.classList.add('visible');
+    }
+
+    function hideError() {
+      bannerError.textContent = '';
+      bannerError.classList.remove('visible');
+    }
+
+    // Initialize on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      checkHealth();
+      loadMetrics();
+      initGallery();
+    });
+  </script>
+</body>
+</html>
+
