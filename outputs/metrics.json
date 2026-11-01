@@ -1,0 +1,7 @@
+{
+  "accuracy": 0.9609,
+  "precision_dog": 0.935,
+  "recall_dog": 0.9905,
+  "f1_dog": 0.9619,
+  "test_samples": 2328
+}

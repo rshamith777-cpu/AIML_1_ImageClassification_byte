@@ -1,0 +1,11 @@
+image_filename,ground_truth,predicted_label,p_dog,confidence
+cat_01.jpg,cat,cat,0.0023,99.77%
+cat_02.jpg,cat,cat,0.0220,97.80%
+cat_03.jpg,cat,cat,0.0431,95.69%
+cat_04.jpg,cat,cat,0.1114,88.86%
+cat_05.jpg,cat,cat,0.0040,99.60%
+dog_01.jpg,dog,dog,0.8987,89.87%
+dog_02.jpg,dog,dog,0.9362,93.62%
+dog_03.jpg,dog,dog,0.9286,92.86%
+dog_04.jpg,dog,dog,0.6855,68.55%
+dog_05.jpg,dog,dog,0.9008,90.08%

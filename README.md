@@ -30,12 +30,51 @@ This repository implements an end-to-end deep convolutional computer vision pipe
 ## 📊 Dataset Reference & Access Instructions
 
 - **Official Source:** [Kaggle Dogs vs. Cats](https://www.kaggle.com/c/dogs-vs-cats/data) / [Microsoft Research Open Data](https://www.microsoft.com/en-us/download/details.aspx?id=54765).
-- **Scale:** 25,000 labeled RGB photographs (12,500 Cats and 12,500 Dogs).
-- **Automated Colab Pipeline:** Built with `tensorflow_datasets` (`tfds.load('cats_vs_dogs')`), automatically partitioned into:
-  - **80% Training:** 20,000 images
-  - **10% Validation:** 2,500 images
-  - **10% Testing:** 2,500 images
+- **Scale:** 25,000 raw RGB photographs (TFDS automatically filters corrupted/truncated headers yielding **23,262 verified images**: 11,631 Cats and 11,631 Dogs).
+- **Deterministic Stratified Partitioning:** Stratified example-level shuffle with disjoint ranges:
+  - **80% Training:** 18,608 images (9,304 Cats / 9,304 Dogs)
+  - **10% Validation:** 2,326 images (1,163 Cats / 1,163 Dogs)
+  - **10% Testing (Held-Out):** 2,328 images (1,164 Cats / 1,164 Dogs)
 - **Detailed Manual Download Instructions:** See [`data/dataset_instructions.md`](data/dataset_instructions.md).
+
+---
+
+## 📈 Empirical Evaluation & Benchmark Results
+
+The model was evaluated on the strictly held-out test split of **2,328 real photographic images** (never seen during feature extraction or fine-tuning).
+
+### Classification Metrics (Held-Out Test Set)
+
+| Evaluation Metric | Score | Note / Interpretation |
+|---|---|---|
+| **Test Accuracy** | **96.09%** | Correct classification across all 2,328 test samples |
+| **Precision (Dog)** | **93.50%** | When predicting canine, 93.5% were true dogs |
+| **Recall (Dog)** | **99.05%** | Successfully identified 99.05% of all canine photographs |
+| **F1-Score (Dog)** | **96.19%** | Harmonic mean of precision and recall |
+| **Held-Out Test Samples** | **2,328** | Balanced 50/50 test distribution |
+
+<p align="center">
+  <img src="outputs/confusion_matrix.png" alt="Confusion Matrix — Cats vs Dogs" width="480px" />
+</p>
+
+### Qualitative Held-Out Sample Predictions
+
+Predictions and calibrated probabilities on 10 randomly selected held-out test photographs:
+
+| Image File | Ground Truth | Predicted | $P(\text{Dog})$ | Confidence | Status |
+|---|---|---|---|---|:---:|
+| `cat_01.jpg` | Cat | **Cat** | 0.0023 | 99.77% | ✅ Correct |
+| `cat_02.jpg` | Cat | **Cat** | 0.0220 | 97.80% | ✅ Correct |
+| `cat_03.jpg` | Cat | **Cat** | 0.0431 | 95.69% | ✅ Correct |
+| `cat_04.jpg` | Cat | **Cat** | 0.1114 | 88.86% | ✅ Correct |
+| `cat_05.jpg` | Cat | **Cat** | 0.0040 | 99.60% | ✅ Correct |
+| `dog_01.jpg` | Dog | **Dog** | 0.8987 | 89.87% | ✅ Correct |
+| `dog_02.jpg` | Dog | **Dog** | 0.9362 | 93.62% | ✅ Correct |
+| `dog_03.jpg` | Dog | **Dog** | 0.9286 | 92.86% | ✅ Correct |
+| `dog_04.jpg` | Dog | **Dog** | 0.6855 | 68.55% | ✅ Correct |
+| `dog_05.jpg` | Dog | **Dog** | 0.9008 | 90.08% | ✅ Correct |
+
+*(Logged directly in [`outputs/sample_predictions.csv`](outputs/sample_predictions.csv) and stored in [`outputs/sample_inferences/`](outputs/sample_inferences/)).*
 
 ---
 
@@ -143,4 +182,4 @@ Hand-crafted computer vision features (such as color histograms and spatial down
 
 The model is trained using a disciplined two-phase transfer learning protocol. In Phase 1, the pre-trained convolutional base is frozen while a custom classification head—consisting of a global average pooling layer, 30% dropout regularization, and a dense output layer—is trained on 20,000 augmented images using binary cross-entropy and the Adam optimizer ($10^{-3}$). In Phase 2, the top 30 layers of the base network are unfrozen for fine-tuning at a reduced learning rate ($10^{-5}$), enabling high-level feature detectors to adapt specifically to pet anatomy (e.g., pointed cat ears vs. rounded dog snouts).
 
-On held-out test partitions, the model achieves **97–99% accuracy**, with balanced precision and recall across both classes. The primary training notebook (`cats_vs_dogs_transfer_learning.ipynb`) is optimized for free Google Colab T4 GPU execution with automated dataset streaming. The final model is serialized as `cats_dogs_mobilenetv2.keras` and paired with a production CLI inference script (`src/predict.py`) for standalone deployment.
+On 2,328 strictly held-out test images, the model achieves **96.09% accuracy**, with **93.50% precision**, **99.05% recall**, and **96.19% F1-score**. The primary training notebook (`cats_vs_dogs_transfer_learning.ipynb`) is optimized for free Google Colab T4 GPU execution with automated dataset streaming. The final model is serialized as `cats_dogs_mobilenetv2.keras` and paired with a production CLI inference script (`src/predict.py`) for standalone deployment.
